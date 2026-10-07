@@ -5,8 +5,8 @@
 (function (root) {
   "use strict";
 
-  // Палитра активности: тёмно-фиолетовый -> пурпурный -> оранжевый -> жёлтый -> почти белый
-  const STOPS = [[0.00, [58, 42, 120]], [0.25, [150, 45, 130]], [0.5, [232, 89, 60]], [0.75, [250, 172, 40]], [1.0, [255, 246, 200]]];
+  // Палитра активности как у мультиплексной флуоресцентной микроскопии: синий -> фиолетовый -> пурпур -> жёлтый
+  const STOPS = [[0.00, [44, 62, 150]], [0.3, [96, 78, 210]], [0.55, [184, 96, 222]], [0.8, [238, 228, 92]], [1.0, [255, 253, 214]]];
   function cmap(a) {
     a = Math.max(0, Math.min(1, a));
     for (let i = 1; i < STOPS.length; i++) {
@@ -50,8 +50,10 @@
   const FS_LINE = `precision mediump float; varying vec4 vc; void main(){ gl_FragColor = vc; }`;
   const VS_PT = `attribute vec3 p; attribute vec4 c; attribute float s; uniform mat4 M; uniform float dpr; varying vec4 vc;
     void main(){ gl_Position = M * vec4(p,1.0); gl_PointSize = s * dpr; vc = c; }`;
-  const FS_PT = `precision mediump float; varying vec4 vc;
-    void main(){ vec2 d = gl_PointCoord - 0.5; float r = length(d); if (r > 0.5) discard;
+  const FS_PT = `precision mediump float; varying vec4 vc; uniform float sq;
+    void main(){ vec2 d = gl_PointCoord - 0.5; float r = length(d);
+      if (sq > 0.5) { gl_FragColor = vc; return; }
+      if (r > 0.5) discard;
       float g = smoothstep(0.5, 0.0, r); gl_FragColor = vec4(vc.rgb, vc.a * g); }`;
 
   function compile(gl, vs, fs) {
@@ -66,7 +68,7 @@
   function create(canvas, opts) {
     const model = opts.model, sk = opts.skeleton;
     const N = model.N;
-    const gl = canvas.getContext("webgl", { antialias: true, premultipliedAlpha: false, preserveDrawingBuffer: true });
+    const gl = canvas.getContext("webgl", { antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
     if (!gl) throw new Error("WebGL недоступен в этом браузере");
 
     // --- геометрия -------------------------------------------------------------
@@ -126,13 +128,13 @@
     if (cloudPos) {
       bCloudPos = buf(cloudPos);
       const cc = new Uint8Array(nCloud * 4);
-      for (let i = 0; i < nCloud; i++) cc.set([110, 130, 160, 34], i * 4);
+      for (let i = 0; i < nCloud; i++) cc.set([170, 170, 170, 60], i * 4);   // «ASCII»-точки силуэта
       bCloudCol = buf(cc);
-      bCloudSize = buf(new Float32Array(nCloud).fill(2.0));
+      bCloudSize = buf(new Float32Array(nCloud).fill(1.6));
     }
 
     // --- состояние ---------------------------------------------------------------
-    let yaw = 0, pitch = 0.0, dist = 2.35, M = null;
+    let yaw = 0, pitch = 0.0, dist = 2.15, M = null;
     let activity = new Float32Array(N), highlight = null, pathSet = null, dirty = true;
     const neuronRGBA = new Uint8Array(N * 4);
 
@@ -179,17 +181,21 @@
     function draw() {
       const dpr = resize();
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0.02, 0.027, 0.04, 1);
+      gl.clearColor(0, 0, 0, 0);                       // прозрачный фон: видна сетка рамки
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.disable(gl.DEPTH_TEST);
       gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       const P = persp(0.7, canvas.width / canvas.height, 0.1, 20);
-      M = mul(P, mul(trans(0, 0, -dist), mul(rotX(pitch), rotY(yaw))));
+      // сдвиг изображения в кадре: на широком экране мозг правее (слева текст), на узком — ниже
+      const wide = canvas.width > canvas.height * 1.1;
+      const off = opts.offset ? opts.offset(wide) : [0, 0];
+      M = mul(trans(off[0], off[1], 0), mul(P, mul(trans(0, 0, -dist), mul(rotX(pitch), rotY(yaw)))));
       if (bCloudPos) {
         gl.useProgram(progP);
         gl.uniformMatrix4fv(gl.getUniformLocation(progP, "M"), false, M);
         gl.uniform1f(gl.getUniformLocation(progP, "dpr"), dpr);
+        gl.uniform1f(gl.getUniformLocation(progP, "sq"), 1);
         bindAttr(progP, "p", bCloudPos, 3, gl.FLOAT);
         bindAttr(progP, "c", bCloudCol, 4, gl.UNSIGNED_BYTE, true);
         bindAttr(progP, "s", bCloudSize, 1, gl.FLOAT);
@@ -205,11 +211,24 @@
       gl.useProgram(progP);
       gl.uniformMatrix4fv(gl.getUniformLocation(progP, "M"), false, M);
       gl.uniform1f(gl.getUniformLocation(progP, "dpr"), dpr);
+      gl.uniform1f(gl.getUniformLocation(progP, "sq"), 0);
       bindAttr(progP, "p", bSomaPos, 3, gl.FLOAT);
       bindAttr(progP, "c", bSomaCol, 4, gl.UNSIGNED_BYTE, true);
       bindAttr(progP, "s", bSomaSize, 1, gl.FLOAT);
       gl.drawArrays(gl.POINTS, 0, N);
       dirty = false;
+      if (opts.onDraw) opts.onDraw(project);
+    }
+
+    // проекция точки нейрона (индексы) в пиксели холста — для подписей-«булавок»
+    function project(indices) {
+      if (!M || !indices.length) return null;
+      let x = 0, y = 0, z = 0;
+      for (const i of indices) { x += somaPos[i * 3]; y += somaPos[i * 3 + 1]; z += somaPos[i * 3 + 2]; }
+      x /= indices.length; y /= indices.length; z /= indices.length;
+      const cxp = M[0] * x + M[4] * y + M[8] * z + M[12], cyp = M[1] * x + M[5] * y + M[9] * z + M[13], cw = M[3] * x + M[7] * y + M[11] * z + M[15];
+      if (cw <= 0) return null;
+      return { x: (cxp / cw * 0.5 + 0.5) * canvas.clientWidth, y: (1 - (cyp / cw * 0.5 + 0.5)) * canvas.clientHeight };
     }
 
     let alive = true;
@@ -278,10 +297,11 @@
         if (v === "front") { yaw = 0; pitch = 0; }
         if (v === "top") { yaw = 0; pitch = 1.45; }
         if (v === "side") { yaw = -1.45; pitch = 0.05; }
-        if (v === "three") { yaw = -0.85; pitch = 0.25; }
+        if (v === "three") { yaw = 0.85; pitch = 0.25; }
         dirty = true;
       },
       destroy() { alive = false; },
+      redraw() { dirty = true; },
     };
     if (opts.view) api.setView(opts.view);
     if (opts.dist) dist = opts.dist;

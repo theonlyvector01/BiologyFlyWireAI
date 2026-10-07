@@ -18,7 +18,7 @@
   const svg = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e; };
   const nf = (x, d = 2) => Number(x).toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d });
   const pct = (p) => Math.round(p * 100) + "%";
-  const pp = (d) => (d > 0 ? "+" : d < 0 ? "−" : "±") + Math.abs(Math.round(d * 100));
+  const pp = (d) => { const v = Math.round(d * 100); return v > 0 ? "+" + v : v < 0 ? "−" + Math.abs(v) : "0"; };
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -56,6 +56,9 @@
     subtitle: "Нейросеть на настоящей проводке мозга дрозофилы решает, примет ли самка самца",
     tag: "самка · FlyWire 783",
     view: "front",
+    statement: "Это мозг самки дрозофилы, который выбирает партнёра.",
+    lede: "Каждая светящаяся линия — настоящий нейрон из коннектома FlyWire. Нейросеть на их связях решает, принять ли самца.",
+    pins: [["JO", "Слух", "--mint", "l"], ["vpoEN", "vpoEN", "--sky", "r"], ["pC1", "pC1", "--lemon", "l"], ["SAG", "SAG", "--mint", "r"], ["vpoDN", "vpoDN · да", "--lime", "l"], ["DNp13", "DNp13 · нет", "--pink", "r"], ["ORN_cVA", "Обоняние", "--sky", "l"]],
     presetDefault: "wt_mel",
     groupsShown: [
       ["JO", "Слух (JO)"], ["ORN_cVA", "Обоняние cVA"], ["SAG", "SAG «девственница»"], ["vpoEN", "vpoEN"], ["pC2l", "pC2l"],
@@ -174,6 +177,9 @@
     subtitle: "Нейросеть на настоящей проводке нервной системы самца дрозофилы решает, ухаживать ли ему",
     tag: "самец · MaleCNS v1.0",
     view: "three",
+    statement: "Это нервная система самца, который решает, ухаживать ли.",
+    lede: "Мозг и брюшная нервная цепочка из коннектома MaleCNS: от вкусовых клеток на лапках до генератора песни крыльями.",
+    pins: [["GRN_F", "Лапки · вкус", "--mint", "l"], ["LC10a", "Зрение", "--sky", "r"], ["mAL", "mAL", "--pink", "l"], ["P1", "P1", "--lemon", "r"], ["pIP10", "pIP10 · песня", "--lime", "l"], ["song", "Ритм песни", "--lime", "r"], ["ORN_cVA", "Обоняние", "--sky", "l"]],
     presetDefault: "m_virgin",
     groupsShown: [
       ["GRN_F", "Вкус: феромон самки"], ["GRN_M", "Вкус: феромон самца"], ["ORN_cVA", "Обоняние cVA"], ["LC10a", "Зрение LC10a"],
@@ -317,11 +323,11 @@
       fields.forEach((f) => f._sync && f._sync());
       changed();
     });
-    box.append(el("section", { class: "card" }, el("h2", {}, "Опыт из научной статьи", el("small", {}, `${model.dataset.behavior.length} опытов`)),
+    box.append(el("section", { class: "block" }, el("h2", {}, "Опыт из статьи →", el("small", {}, `${model.dataset.behavior.length} опытов`)),
       sel, el("div", { class: "preset-note", id: "preset-note" })));
     fields.length = 0;
     for (const sec of cfg.sections()) {
-      const card = el("section", { class: "card" }, el("h2", {}, sec.title, el("small", {}, sec.small)));
+      const card = el("section", { class: "block" }, el("h2", {}, sec.title, el("small", {}, sec.small)));
       for (const f of sec.fields) { const w = makeField(f); fields.push(w); card.append(w); }
       box.append(card);
     }
@@ -341,7 +347,7 @@
       fields.push(row);
       opto.append(row);
     }
-    box.append(el("section", { class: "card" }, el("h2", {}, "Виртуальная оптогенетика", el("small", {}, "выкл / вкл группы")), opto));
+    box.append(el("section", { class: "block" }, el("h2", {}, "Оптогенетика", el("small", {}, "выкл / вкл группы")), opto));
     syncVisibility();
   }
   function syncVisibility() {
@@ -401,9 +407,9 @@
     const icon = { yes: "✓", no: "✕", mid: "≈" }[v.cls];
     const box = $("#verdict");
     box.className = "verdict " + v.cls;
-    box.innerHTML = `<div class="pct">${pct(v.p)}</div><div class="word"><span aria-hidden="true">${icon}</span>${v.word}</div><div class="sub">${v.sub}</div>`;
+    box.innerHTML = `<div class="pct">${pct(v.p)}</div><div class="word"><span class="sq" aria-hidden="true"></span><span>${icon} ${v.word}</span></div><div class="sub">${v.sub}</div>`;
     $("#meter").style.width = pct(v.p);
-    $("#meter").style.background = css(v.cls === "yes" ? "--accept" : v.cls === "no" ? "--reject" : "--ink-2");
+    $("#meter").style.background = css(v.cls === "yes" ? "--lime" : v.cls === "no" ? "--pink" : "--lemon");
     $("#oe").innerHTML = `<span>${v.second[0]}</span><b>${pct(v.second[1])}</b>`;
     $("#model-tag").textContent = cfg.tag;
 
@@ -418,7 +424,7 @@
     if (S.path.length) {
       const names = [];
       for (const i of S.path) { const t = cfg.alias[m.neurons.type[i]] || m.neurons.type[i]; if (names[names.length - 1] !== t) names.push(t); }
-      path.append(el("span", { class: "eyebrow" }, "Путь сигнала:"));
+      path.append(el("span", { class: "lab" }, "Путь сигнала:"));
       names.forEach((t, k) => { if (k) path.append(el("span", { class: "a" }, "→")); path.append(el("span", { class: "n" }, t)); });
     }
     const bars = $("#bars");
@@ -430,6 +436,20 @@
     }
     renderLegend();
     renderTrace();
+    renderBand();
+  }
+  function renderBand() {
+    const m = S.model, rep = m.report;
+    const tr = rep.behavior.filter((b) => b.split === "train"), te = rep.behavior.filter((b) => b.split === "test");
+    const st = (num, label) => el("div", { class: "st" }, el("b", {}, num), el("span", {}, label));
+    const box = $("#band");
+    box.innerHTML = "";
+    box.append(
+      st(m.stats.neurons.toLocaleString("ru-RU"), "настоящих нейронов в сети"),
+      st(m.stats.edges.toLocaleString("ru-RU"), "синаптических связей"),
+      st(m.stats.synapses.toLocaleString("ru-RU"), "синапсов из электронной микроскопии"),
+      st(`${tr.filter((b) => b.ok).length}/${tr.length}`, "опытов обучения совпали со статьями"),
+      st(`${te.filter((b) => b.ok).length}/${te.length}`, "скрытых опытов предсказано верно"));
   }
 
   // ---------- 3D ----------
@@ -448,14 +468,56 @@
     const cv = old.cloneNode(false);
     old.replaceWith(cv);
     try {
-      viewer = FlyBrain3D.create(cv, { model: S.model, skeleton: SKELS[S.sex] || null, onHover, view: S.cfg.view });
+      viewer = FlyBrain3D.create(cv, { model: S.model, skeleton: SKELS[S.sex] || null, onHover, view: S.cfg.view, onDraw: (pr) => placePins(pr),
+        offset: (wide) => (S.sex === "male" ? (wide ? [0.04, -0.12] : [0, -0.2]) : (wide ? [0.22, -0.06] : [0, -0.22])),
+        dist: S.sex === "male" ? 2.95 : 2.15 });
     } catch (e) {
-      $("#hud-tl").textContent = "3D недоступно: " + e.message;
+      $("#hud").textContent = "3D недоступно: " + e.message;
       return;
     }
-    const st = S.model.stats;
-    $("#hud-tl").innerHTML = `<b>${esc(S.model.source.split(" (")[0])}</b><br><b>${st.neurons.toLocaleString("ru-RU")}</b> нейронов · <b>${st.edges.toLocaleString("ru-RU")}</b> связей · <b>${st.synapses.toLocaleString("ru-RU")}</b> синапсов` +
-      (!viewer.hasSkeletons ? "<br>скелеты не загружены — показаны сомы" : "");
+    $("#hud").innerHTML = `<b>${esc(S.model.source.split(" (")[0])}</b>` + (!viewer.hasSkeletons ? "<br>скелеты не загружены — показаны сомы" : "");
+    $("#statement").textContent = S.cfg.statement;
+    $("#lede").textContent = S.cfg.lede;
+    buildPins();
+  }
+
+  // подписи-«булавки» групп нейронов поверх 3D (как метки на карте)
+  let pinEls = [];
+  function buildPins() {
+    const layer = $("#pins");
+    layer.innerHTML = "";
+    const side = S.model.neurons.side;
+    pinEls = S.cfg.pins.filter(([g]) => (S.model.groupMembers[g] || []).length).map(([g, text, col, sd]) => {
+      const e = el("div", { class: "pin" }, el("i", { style: `background:${css(col)}` }, "+"), el("span", { style: `background:${css(col)}` }, text));
+      layer.append(e);
+      const all = S.model.groupMembers[g];
+      const one = all.filter((i) => (side[i] || "").toLowerCase().startsWith(sd));   // одна сторона мозга
+      return { g, e, idx: one.length ? one : all, w: 22 + text.length * 7 };
+    });
+  }
+  function placePins(project) {
+    const placed = [];
+    for (const p of pinEls) {
+      const xy = project(p.idx);
+      if (!xy) { p.e.hidden = true; continue; }
+      let y = xy.y;
+      for (let k = 0; k < 8; k++) {      // раздвигаем подписи, чтобы не налезали друг на друга
+        const hit = placed.find((q) => Math.abs(q.y - y) < 17 && xy.x < q.x + q.w && xy.x + p.w > q.x);
+        if (!hit) break;
+        y = hit.y + 18;
+      }
+      placed.push({ x: xy.x, y, w: p.w });
+      p.e.hidden = false;
+      p.e.style.left = xy.x + "px"; p.e.style.top = y + "px";
+    }
+  }
+  function pinActivity(act) {
+    const m = S.model;
+    for (const p of pinEls) {
+      const mem = m.groupMembers[p.g];
+      let a = 0; for (const i of mem) a += act[i];
+      p.e.style.opacity = (0.72 + 0.28 * Math.min(1, (a / mem.length) * 1.6)).toFixed(2);
+    }
   }
   $("#cmap-swatch").style.background = FlyBrain3D.cmapCss;
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => viewer && viewer.setView(b.dataset.view)));
@@ -486,7 +548,9 @@
     const r = S.res;
     if (!r) return;
     const N = S.model.N;
-    viewer && viewer.setActivity(S.playing || f > 0 ? r.trace.subarray(f * N, (f + 1) * N) : r.neuronMean);
+    const act = S.playing || f > 0 ? r.trace.subarray(f * N, (f + 1) * N) : r.neuronMean;
+    viewer && viewer.setActivity(act);
+    pinActivity(act);
     scrub.value = f;
     $("#tlabel").textContent = nf((f * DT) / 1000, 2) + " с";
     const ph = $("#playhead");
@@ -595,20 +659,20 @@
 
     const okTr = tr.filter((b) => b.ok).length, okTe = te.filter((b) => b.ok).length, okPh = phys.filter((p) => p.ok).length;
     const par = parity(m);
-    page.append(el("div", { class: "tiles" },
-      el("div", { class: "tile" }, el("b", {}, `${okTr}/${tr.length}`), el("span", {}, "опытов обучения в интервале статьи")),
-      el("div", { class: "tile" }, el("b", {}, `${okTe}/${te.length}`), el("span", {}, "скрытых тестовых опытов предсказано верно")),
-      el("div", { class: "tile" }, el("b", {}, `${okPh}/${phys.length}`), el("span", {}, "физиологических фактов воспроизведено")),
-      el("div", { class: "tile" }, el("b", {}, m.stats.neurons.toLocaleString("ru-RU")), el("span", {}, "реальных нейронов в сети")),
-      el("div", { class: "tile" }, el("b", {}, (m.nParams || 0).toLocaleString("ru-RU")), el("span", {}, "обучаемых параметров")),
-      el("div", { class: "tile" }, el("b", {}, par < 1e-3 ? "< 0,001" : nf(par, 3)), el("span", {}, "расхождение браузера и PyTorch"))));
+    const st = (num, label) => el("div", { class: "st" }, el("b", {}, num), el("span", {}, label));
+    page.append(el("div", { class: "band", style: "margin:0;max-width:none" },
+      st(`${okTr}/${tr.length}`, "опытов обучения в интервале статьи"),
+      st(`${okTe}/${te.length}`, "скрытых тестовых опытов предсказано верно"),
+      st(`${okPh}/${phys.length}`, "физиологических фактов воспроизведено"),
+      st((m.nParams || 0).toLocaleString("ru-RU"), "обучаемых параметров"),
+      st(par < 1e-3 ? "<0,001" : nf(par, 3), "расхождение браузера и PyTorch")));
 
     // предсказания и интервалы из статей (одна строка на каждое измерение опыта)
     const rows = [];
     for (const b of beh) for (const [key, pr] of Object.entries(b.preds)) rows.push({ b, key, ...pr });
     const fig = el("div", { class: "fig" }, el("h3", {}, "Предсказания модели и данные статей"),
       el("p", { class: "cap" }, "Полоса — интервал из статьи. Точка — предсказание обученной сети. Пустая точка — опыт, который сеть не видела при обучении."));
-    const RH = 22, LW = 330, W = 780, PRt = 30, H = rows.length * RH + 30;
+    const RH = 22, LW = 370, W = 800, PRt = 30, H = rows.length * RH + 30;
     const x = (v) => LW + v * (W - LW - PRt);
     const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Сравнение предсказаний с интервалами из статей" });
     for (const v of [0, 0.25, 0.5, 0.75, 1]) {
@@ -620,17 +684,17 @@
     rows.forEach((rw, i) => {
       const yy = 6 + i * RH + RH / 2;
       let label = rw.b.title_ru + (rw.key !== main ? ` · ${cfg.readoutName[rw.key]}` : "");
-      if (label.length > 50) label = label.slice(0, 49) + "…";
+      if (label.length > 52) label = label.slice(0, 51) + "…";
       const lab = svg("text", { x: LW - 8, y: yy + 3, "text-anchor": "end" });
       lab.textContent = label;
-      lab.setAttribute("style", `fill:${css("--ink-2")};font:11px var(--body)`);
+      lab.setAttribute("style", `fill:${css("--ink-2")};font:11px var(--display)`);
       s.append(lab);
-      s.append(svg("rect", { x: x(rw.target[0]), y: yy - 5, width: Math.max(2, x(rw.target[1]) - x(rw.target[0])), height: 10, rx: 3, fill: css("--accent-soft") }));
+      s.append(svg("rect", { x: x(rw.target[0]), y: yy - 5, width: Math.max(2, x(rw.target[1]) - x(rw.target[0])), height: 10, fill: "rgba(140,204,250,0.30)" }));
       const test = rw.b.split === "test";
-      s.append(svg("circle", { cx: x(rw.pred), cy: yy, r: 5, fill: test ? css("--panel") : css("--accent"), stroke: test ? css("--accent") : css("--panel"), "stroke-width": 2 }));
+      s.append(svg("rect", { x: x(rw.pred) - 5, y: yy - 5, width: 10, height: 10, fill: test ? css("--bg") : css("--lemon"), stroke: css("--lemon"), "stroke-width": 2 }));
       const mk = svg("text", { x: W - 6, y: yy + 4, "text-anchor": "end" });
       mk.textContent = rw.ok ? "✓" : "✕";
-      mk.setAttribute("style", `fill:${css(rw.ok ? "--accept" : "--reject")};font:600 12px var(--body)`);
+      mk.setAttribute("style", `fill:${css(rw.ok ? "--lime" : "--pink")};font:600 12px var(--display)`);
       s.append(mk);
       const src = ds.behavior.find((d) => d.id === rw.b.id);
       const hit = svg("rect", { x: 0, y: yy - RH / 2, width: W, height: RH, fill: "transparent" });
@@ -642,9 +706,9 @@
       s.append(hit);
     });
     fig.append(el("div", { class: "chart" }, s), el("div", { class: "keys" },
-      el("span", {}, el("i", { style: `background:${css("--accent-soft")};height:8px;width:18px` }), "интервал из статьи"),
-      el("span", {}, el("i", { style: `background:${css("--accent")};height:9px;width:9px;border-radius:50%` }), "предсказание (обучение)"),
-      el("span", {}, el("i", { style: `border:2px solid ${css("--accent")};height:9px;width:9px;border-radius:50%` }), "предсказание (тест)")));
+      el("span", {}, el("i", { style: "background:rgba(140,204,250,0.30);height:8px;width:18px" }), "интервал из статьи"),
+      el("span", {}, el("i", { style: `background:${css("--lemon")};height:9px;width:9px` }), "предсказание (обучение)"),
+      el("span", {}, el("i", { style: `border:2px solid ${css("--lemon")};height:9px;width:9px` }), "предсказание (тест)")));
     page.append(fig);
 
     const hist = rep.history || [];
@@ -666,7 +730,7 @@
       hist.forEach((h, i) => { d += (i ? "L" : "M") + X(h.it).toFixed(1) + " " + Y(h.loss).toFixed(1); });
       s2.append(svg("path", { d, fill: "none", stroke: css("--s1"), "stroke-width": 2, "stroke-linejoin": "round" }));
       const lh = hist[hist.length - 1];
-      s2.append(svg("circle", { cx: X(lh.it), cy: Y(lh.loss), r: 4, fill: css("--s1"), stroke: css("--panel"), "stroke-width": 2 }));
+      s2.append(svg("circle", { cx: X(lh.it), cy: Y(lh.loss), r: 4, fill: css("--s1"), stroke: css("--bg"), "stroke-width": 2 }));
       f2.append(el("div", { class: "chart" }, s2));
       page.append(f2);
     }
@@ -717,6 +781,8 @@
   <p><b>Самец</b> пробует цель лапками: F-клетки (ppk23/ppk25) чувствуют феромон самки 7,11-HD, M-клетки (ppk23) — 7-трикозен самцов; нос ловит cVA (Or67d), глаза следят за движением (LC10a). Решение «ухаживать» — нейроны P1, команда «петь» — pIP10 и генератор песни в грудных ганглиях.</p>
   <h3>5. Обучение</h3>
   <p>Обе сети обучены с нуля на опубликованных экспериментах (вкладка «Обучение и проверка»). Готовые и предобученные ИИ-модели не использовались. Работающая модель исполняется прямо в браузере собственным кодом на JavaScript.</p>
+</div>
+<div class="callout">
   <h3>Честные ограничения</h3>
   <ul>
     <li>Коннектом самки — только мозг; сигналы из тела (SAG, гормоны) заданы как входы. Коннектом самца включает нервную цепочку, но гормоны и нейромодуляторы тоже упрощены.</li>
@@ -725,6 +791,8 @@
     <li>Предсказанные медиаторы не всегда совпадают с описанием в статьях: например, в MaleCNS нейроны vAB3 предсказаны как ГАМК-ергические. Модель следует коннектому.</li>
     <li>Объяснение строится сравнением с изменённым опытом (что было бы без песни, без феромона и т.д.); путь сигнала — самая сильная цепочка возбуждающих связей с учётом активности.</li>
   </ul>
+</div>
+<div class="prose">
   <h3>Как запустить заново</h3>
   <p class="mono" style="font-size:13px">python pipeline/01_download.py --skeletons --male<br>python pipeline/02_build_circuit.py · 02b_build_circuit_male.py<br>python pipeline/03_build_dataset.py · 03b_build_dataset_male.py<br>python pipeline/04_train.py --sex female · --sex male<br>python pipeline/05_skeletons.py · 05b_skeletons_male.py<br>python pipeline/06_export_web.py<br>python pipeline/07_build_bundle.py</p>
 </div>`;
@@ -749,7 +817,7 @@
     const b = S.model.dataset.behavior.find((x) => x.id === S.preset);
     S.ui = b ? S.cfg.fromScenario(b.scenario) : clone(S.cfg.defaults);
     document.querySelectorAll("[data-sex]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.sex === sex)));
-    $(".brand p").textContent = S.cfg.subtitle;
+    document.querySelector('meta[name="description"]')?.setAttribute("content", S.cfg.subtitle);
     buildViewer();
     buildControls();
     run();
