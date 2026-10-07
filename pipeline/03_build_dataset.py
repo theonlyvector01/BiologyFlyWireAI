@@ -1,0 +1,216 @@
+"""Шаг 3. Обучающая выборка из опубликованных экспериментов (самка выбирает самца).
+
+Каждая запись — реальный эксперимент из научной статьи:
+  * условия (возраст самки, спаривалась ли она, вид самца, есть ли песня, мутации,
+    оптогенетическое выключение/включение нейронов);
+  * результат — доля самок, принявших самца (копуляция за 30–60 мин), в виде ИНТЕРВАЛА [min, max].
+Интервалы, а не точные числа: в статьях значения различаются между линиями мух и протоколами,
+поэтому мы честно задаём допустимый диапазон. Там, где в статье есть число, оно указано в
+поле `evidence_ru`.
+
+Вторая часть — физиологические факты (кальциевая визуализация, электрофизиология): какой группе
+нейронов полагается быть активнее в каком условии. Сеть учится и поведению, и физиологии.
+
+Часть экспериментов помечена split="test": сеть их НЕ видит при обучении — это проверка того,
+что модель предсказывает новые опыты, а не просто запоминает.
+
+Результат: data/literature/female_experiments.json
+"""
+import json
+
+from config import LITERATURE
+
+SRC = {
+    "wang2021": "Wang K. et al. (2021) Neural circuit mechanisms of sexual receptivity in Drosophila females. Nature 589:577–581",
+    "wang2020": "Wang F. et al. (2020) Circuit and behavioral mechanisms of sexual rejection by Drosophila females. Curr Biol 30:3749–3760",
+    "zhou2014": "Zhou C. et al. (2014) Central brain neurons expressing doublesex regulate female receptivity in Drosophila. Neuron 83:149–163",
+    "feng2014": "Feng K. et al. (2014) Ascending SAG neurons control sexual receptivity of Drosophila females. Neuron 83:135–148",
+    "deutsch2020": "Deutsch D. et al. (2020) The neural basis for a persistent internal state in Drosophila females. eLife 9:e59502",
+    "deutsch2019": "Deutsch D. et al. (2019) Shared song detector neurons in Drosophila male and female brains drive sex-specific behaviors. Curr Biol 29:3200–3215",
+    "chen2025": "Chen J. et al. (2025) A hormone-to-neuropeptide pathway inhibits sexual receptivity in immature Drosophila females. PNAS 122:e2418481122",
+    "bce1969": "Bennet-Clark H.C., Ewing A.W. (1969) Pulse interval as a critical parameter in the courtship song of Drosophila melanogaster. Anim Behav 17:755–759",
+    "manning1959": "Manning A. (1959) The sexual isolation between Drosophila melanogaster and Drosophila simulans. Anim Behav 7:60–65",
+    "kurtovic2007": "Kurtovic A., Widmer A., Dickson B.J. (2007) A single class of olfactory neurons mediates behavioural responses to a Drosophila sex pheromone. Nature 446:542–546",
+    "wigby2011": "Wigby S. et al. (2011) Insulin signalling regulates remating in female Drosophila. Proc R Soc B 278:424–431",
+    "peng2005": "Peng J. et al. (2005) Gradual release of sperm bound sex-peptide controls female postmating behavior in Drosophila. Curr Biol 15:207–213",
+}
+
+BASE = dict(age_h=96.0, mated=False, male_species="mel", male_wings=True, male_cva=1.0, song_amount=1.0)
+
+
+def sc(**kw):
+    return {**BASE, **kw}
+
+
+# ---------------------------------------------------------------------------------------
+# 1. Поведение: доля самок, принявших самца
+# ---------------------------------------------------------------------------------------
+BEHAVIOR = [
+    dict(id="wt_mel", split="train", scenario=sc(),
+         accept=[0.75, 0.95], oe=[0.0, 0.2],
+         title_ru="Зрелая девственница + самец D. melanogaster",
+         evidence_ru="Зрелые (3–7 сут) девственницы принимают своего самца в >80% случаев за 30 мин; девственницы почти не выдвигают яйцеклад.",
+         source=["chen2025", "wang2020"]),
+    dict(id="wt_sim", split="train", scenario=sc(male_species="sim"),
+         accept=[0.0, 0.15],
+         title_ru="Девственница + самец другого вида (D. simulans)",
+         evidence_ru="Самки D. melanogaster почти не спариваются с самцами D. simulans; песня simulans имеет межимпульсный интервал 48 мс вместо 35 мс.",
+         source=["manning1959", "bce1969", "wang2021"]),
+    dict(id="wingless", split="train", scenario=sc(male_wings=False),
+         accept=[0.05, 0.45],
+         title_ru="Самец без крыльев (не может петь)",
+         evidence_ru="Немые (бескрылые) самцы спариваются заметно хуже; проигрывание песни через динамик восстанавливает успех.",
+         source=["bce1969"]),
+    dict(id="playback35", split="train", scenario=sc(male_wings=False, playback_ipi=35),
+         accept=[0.4, 0.85],
+         title_ru="Бескрылый самец + песня из динамика, интервал 35 мс",
+         evidence_ru="Искусственная импульсная песня с интервалом ~34 мс повышает скорость спаривания с немыми самцами.",
+         source=["bce1969"]),
+    dict(id="playback48", split="test", scenario=sc(male_wings=False, playback_ipi=48),
+         accept=[0.05, 0.45],
+         title_ru="Бескрылый самец + песня 48 мс (как у D. simulans)",
+         evidence_ru="Песня с интервалом другого вида не помогает самцу.",
+         source=["bce1969"]),
+    dict(id="playback20", split="train", scenario=sc(male_wings=False, playback_ipi=20),
+         accept=[0.05, 0.45],
+         title_ru="Бескрылый самец + слишком частая песня (20 мс)",
+         evidence_ru="Эффективны только интервалы около 30–40 мс (полосовая настройка).",
+         source=["bce1969", "wang2021"]),
+    dict(id="playback75", split="train", scenario=sc(male_wings=False, playback_ipi=75),
+         accept=[0.05, 0.45],
+         title_ru="Бескрылый самец + слишком редкая песня (75 мс)",
+         evidence_ru="Эффективны только интервалы около 30–40 мс (полосовая настройка).",
+         source=["bce1969", "wang2021"]),
+    dict(id="or67d", split="test", scenario=sc(or67d_mutant=True),
+         accept=[0.35, 0.75],
+         title_ru="Самка без рецептора феромона Or67d",
+         evidence_ru="Мутантные по Or67d самки менее восприимчивы к ухаживанию: cVA у самок способствует спариванию.",
+         source=["kurtovic2007"]),
+    # --- возраст ---
+    dict(id="age12h", split="train", scenario=sc(age_h=12), accept=[0.0, 0.05],
+         title_ru="Самка 12 ч после выхода из куколки",
+         evidence_ru="Первые 18 ч после выхода самки не принимают самцов вовсе.", source=["chen2025"]),
+    dict(id="age18h", split="train", scenario=sc(age_h=18), accept=[0.0, 0.08],
+         title_ru="Самка 18 ч", evidence_ru="Первые 18 ч после выхода самки не принимают самцов.", source=["chen2025"]),
+    dict(id="age36h", split="train", scenario=sc(age_h=36), accept=[0.1, 0.32],
+         title_ru="Самка 36 ч (половое созревание)",
+         evidence_ru="В 36 ч копулирует ~20% самок дикого типа за 30 мин.", source=["chen2025"]),
+    dict(id="age72h", split="train", scenario=sc(age_h=72), accept=[0.75, 0.95],
+         title_ru="Самка 3 сут", evidence_ru="Пик рецептивности достигается к 3 сут.", source=["chen2025"]),
+    dict(id="age7d", split="train", scenario=sc(age_h=168), accept=[0.75, 0.95],
+         title_ru="Самка 7 сут", evidence_ru="Зрелые самки высоко рецептивны (>80%).", source=["chen2025"]),
+    dict(id="lk_mut_36h", split="test", scenario=sc(age_h=36, lk_mutant=True), accept=[0.45, 0.75],
+         title_ru="Мутант по лейкокинину (LK), 36 ч",
+         evidence_ru="Без нейропептида LK ~60% 36-часовых самок спариваются (против ~20% у дикого типа).",
+         source=["chen2025"]),
+    dict(id="lk_mut_18h", split="train", scenario=sc(age_h=18, lk_mutant=True), accept=[0.0, 0.1],
+         title_ru="Мутант по LK, 18 ч", evidence_ru="Подавление LKR в pC1 не влияет на рецептивность 18-часовых самок.",
+         source=["chen2025"]),
+    dict(id="lk_act_7d", split="train", scenario=sc(age_h=168, activate=["LK"]), accept=[0.0, 0.1],
+         title_ru="Активация LK-нейронов у зрелой самки",
+         evidence_ru="Термогенетическая активация LK-нейронов почти полностью отменяет рецептивность.", source=["chen2025"]),
+    # --- статус спаривания ---
+    dict(id="mated1d", split="train", scenario=sc(mated=True, days_since_mating=1), accept=[0.0, 0.12], oe=[0.5, 1.0],
+         title_ru="Самка спаривалась сутки назад",
+         evidence_ru="Половой пептид (SP) самца делает самку невосприимчивой; спарившиеся самки отвергают самцов выдвижением яйцеклада.",
+         source=["feng2014", "wang2020"]),
+    dict(id="mated2d", split="train", scenario=sc(mated=True, days_since_mating=2), accept=[0.0, 0.2],
+         title_ru="Самка спаривалась 2 сут назад", evidence_ru="Длительный ответ на SP сохраняется несколько суток.",
+         source=["peng2005"]),
+    dict(id="mated5d", split="train", scenario=sc(mated=True, days_since_mating=5), accept=[0.25, 0.7],
+         title_ru="Самка спаривалась 5 сут назад",
+         evidence_ru="SP связан со сперматозоидами и постепенно высвобождается; через ~5 сут значительная часть самок снова спаривается.",
+         source=["peng2005"]),
+    dict(id="mated_sp0", split="test", scenario=sc(mated=True, days_since_mating=1, sp_null_male=True), accept=[0.75, 1.0],
+         title_ru="Спаривалась сутки назад с самцом без полового пептида (SP0)",
+         evidence_ru="Через 24 ч после спаривания с SP0-самцами повторно спарились все самки (n = 24–30).",
+         source=["wigby2011"]),
+    # --- оптогенетика / генетика нейронов ---
+    dict(id="sil_pC1", split="train", scenario=sc(silence=["pC1"]), accept=[0.0, 0.2],
+         title_ru="Выключены нейроны pC1", evidence_ru="Подавление pC1 делает самок невосприимчивыми.",
+         source=["zhou2014", "deutsch2020"]),
+    dict(id="sil_pCd", split="test", scenario=sc(silence=["pCd"]), accept=[0.0, 0.35],
+         title_ru="Выключены нейроны pCd", evidence_ru="Подавление pCd делает самок невосприимчивыми.",
+         source=["zhou2014"]),
+    dict(id="sil_SAG", split="train", scenario=sc(silence=["SAG"]), accept=[0.0, 0.25],
+         title_ru="Выключены нейроны SAG у девственницы",
+         evidence_ru="Подавление SAG делает девственниц невосприимчивыми (имитирует спаривание).", source=["feng2014"]),
+    dict(id="act_SAG_mated", split="test", scenario=sc(mated=True, days_since_mating=1, activate=["SAG"]), accept=[0.2, 0.8],
+         title_ru="Активированы SAG у спарившейся самки",
+         evidence_ru="Активация SAG повышает рецептивность уже спарившихся самок.", source=["feng2014"]),
+    dict(id="sil_vpoDN", split="train", scenario=sc(silence=["vpoDN"]), accept=[0.0, 0.05],
+         title_ru="Выключены vpoDN", evidence_ru="Острое подавление vpoDN предотвращало копуляцию и резко снижало раскрытие вагинальной пластинки.",
+         source=["wang2021"]),
+    dict(id="sil_vpoEN", split="train", scenario=sc(silence=["vpoEN"]), accept=[0.1, 0.5],
+         title_ru="Выключены vpoEN", evidence_ru="Подавление vpoEN значимо снижало частоту копуляции и раскрытия пластинки.",
+         source=["wang2021"]),
+    dict(id="act_DNp13", split="train", scenario=sc(activate=["DNp13"]), accept=[0.0, 1.0], oe=[0.6, 1.0],
+         title_ru="Активированы DNp13 у девственницы",
+         evidence_ru="DNp13 — командные нейроны выдвижения яйцеклада. Отпугивает самца это только у спарившихся самок, поэтому для девственницы задана лишь цель по выдвижению яйцеклада.",
+         source=["wang2020"]),
+    dict(id="act_pC1de", split="train", scenario=sc(activate=["pC1de"]), accept=[0.65, 0.98],
+         title_ru="Активированы pC1d/e", evidence_ru="Активация pC1d/e вызывает агрессию самки, но не меняет частоту копуляции.",
+         source=["deutsch2020"]),
+]
+
+# ---------------------------------------------------------------------------------------
+# 2. Физиология: сравнение средней активности групп нейронов в двух условиях
+#    rel ">" : активность в A больше, чем в B, минимум на margin
+#    rel "≈" : разница не больше margin
+# ---------------------------------------------------------------------------------------
+SONG = sc(male_wings=False, playback_ipi=35)
+NOSONG = sc(male_wings=False)
+PHYS = [
+    dict(id="vpoEN_song", group="vpoEN", a=SONG, b=NOSONG, rel=">", margin=0.2, source=["wang2021"],
+         text_ru="vpoEN отвечают на импульсную песню своего вида"),
+    dict(id="vpoEN_ipi48", group="vpoEN", a=SONG, b=sc(male_wings=False, playback_ipi=48), rel=">", margin=0.12, source=["wang2021"],
+         text_ru="vpoEN сильнее отвечают на интервал 35 мс, чем на 48 мс (D. simulans)"),
+    dict(id="vpoEN_ipi20", group="vpoEN", a=SONG, b=sc(male_wings=False, playback_ipi=20), rel=">", margin=0.12, source=["wang2021"],
+         text_ru="vpoEN настроены на ~35 мс: частая песня (20 мс) слабее"),
+    dict(id="vpoEN_ipi75", group="vpoEN", a=SONG, b=sc(male_wings=False, playback_ipi=75), rel=">", margin=0.12, source=["wang2021"],
+         text_ru="vpoEN настроены на ~35 мс: редкая песня (75 мс) слабее"),
+    dict(id="vpoEN_mated", group="vpoEN", a=SONG, b={**SONG, "mated": True, "days_since_mating": 1}, rel="≈", margin=0.06, source=["wang2021"],
+         text_ru="Ответы vpoEN на песню не зависят от статуса спаривания"),
+    dict(id="vpoDN_mated", group="vpoDN", a=SONG, b={**SONG, "mated": True, "days_since_mating": 1}, rel=">", margin=0.12, source=["wang2021"],
+         text_ru="Ответы vpoDN на песню ослаблены после спаривания (через pC1)"),
+    dict(id="vpoDN_ipi", group="vpoDN", a=SONG, b=sc(male_wings=False, playback_ipi=48), rel=">", margin=0.1, source=["wang2021"],
+         text_ru="vpoDN надёжно отвечают только на интервал около 35 мс"),
+    dict(id="pC1_song", group="pC1", a=SONG, b=NOSONG, rel=">", margin=0.05, source=["zhou2014"],
+         text_ru="pC1 отвечают на песню самца"),
+    dict(id="pC1_cva", group="pC1", a=sc(male_wings=False, male_cva=1.0), b=sc(male_wings=False, male_cva=0.0), rel=">", margin=0.05,
+         source=["zhou2014"], text_ru="pC1 отвечают на феромон cVA"),
+    dict(id="pCd_cva", group="pCd", a=sc(male_wings=False, male_cva=1.0), b=sc(male_wings=False, male_cva=0.0), rel=">", margin=0.05,
+         source=["zhou2014"], text_ru="pCd отвечают на феромон cVA"),
+    dict(id="pC1_mated", group="pC1", a=sc(), b=sc(mated=True, days_since_mating=1), rel=">", margin=0.1, source=["feng2014", "wang2021"],
+         text_ru="pC1 кодируют статус спаривания: у спарившейся самки активность ниже"),
+    dict(id="DNp13_song", group="DNp13", a=SONG, b=NOSONG, rel=">", margin=0.1, source=["wang2020"],
+         text_ru="DNp13 отвечают на песню через нейроны pC2l"),
+    dict(id="DNp13_mated", group="DNp13", a=SONG, b={**SONG, "mated": True, "days_since_mating": 1}, rel="≈", margin=0.06, source=["wang2020"],
+         text_ru="Статус спаривания не меняет ответы DNp13 на песню"),
+    dict(id="pC2l_song", group="pC2l", a=SONG, b=NOSONG, rel=">", margin=0.08, source=["deutsch2019"],
+         text_ru="pC2l — детекторы импульсной песни"),
+    dict(id="pC2l_ipi", group="pC2l", a=SONG, b=sc(male_wings=False, playback_ipi=75), rel=">", margin=0.05, source=["deutsch2019"],
+         text_ru="pC2l предпочитают интервалы песни своего вида"),
+]
+
+
+def main() -> None:
+    LITERATURE.mkdir(parents=True, exist_ok=True)
+    out = {
+        "description_ru": "Обучающие данные: опубликованные эксперименты о выборе партнёра самкой D. melanogaster.",
+        "sources": SRC,
+        "behavior": BEHAVIOR,
+        "physiology": PHYS,
+    }
+    for b in BEHAVIOR:
+        for s in b["source"]:
+            assert s in SRC, s
+    path = LITERATURE / "female_experiments.json"
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=1))
+    n_train = sum(b["split"] == "train" for b in BEHAVIOR)
+    print(f"Записано {path}: {len(BEHAVIOR)} поведенческих опытов ({n_train} обучение, "
+          f"{len(BEHAVIOR) - n_train} тест), {len(PHYS)} физиологических фактов.")
+
+
+if __name__ == "__main__":
+    main()

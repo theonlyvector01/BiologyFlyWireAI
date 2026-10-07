@@ -1,0 +1,164 @@
+{
+ "neurons": 978,
+ "edges": 9967,
+ "synapses": 173750,
+ "types": 247,
+ "groups": {
+  "DNp13": 2,
+  "JO": 110,
+  "ORN_cVA": 191,
+  "PN_cVA": 27,
+  "SAG": 2,
+  "aSP": 55,
+  "other": 450,
+  "pC1": 6,
+  "pC1de": 4,
+  "pC2l": 39,
+  "pCd": 76,
+  "vpoDN": 2,
+  "vpoEN": 4,
+  "vpoIN": 10
+ },
+ "nt": {
+  "acetylcholine": 733,
+  "gaba": 178,
+  "glutamate": 59,
+  "serotonin": 8
+ },
+ "top_inputs_DNp37": {
+  "pC1a": {
+   "syn": 382,
+   "sign": "+"
+  },
+  "AVLP008": {
+   "syn": 265,
+   "sign": "-"
+  },
+  "vpoEN": {
+   "syn": 165,
+   "sign": "+"
+  },
+  "SMP157": {
+   "syn": 111,
+   "sign": "+"
+  },
+  "pC1c": {
+   "syn": 106,
+   "sign": "+"
+  },
+  "LHAV4c2": {
+   "syn": 85,
+   "sign": "-"
+  },
+  "AVLP009": {
+   "syn": 52,
+   "sign": "-"
+  },
+  "CB1865": {
+   "syn": 52,
+   "sign": "-"
+  }
+ },
+ "top_inputs_DNp13": {
+  "CL313": {
+   "syn": 678,
+   "sign": "+"
+  },
+  "AN_AVLP_GNG_19": {
+   "syn": 312,
+   "sign": "+"
+  },
+  "vpoEN": {
+   "syn": 272,
+   "sign": "+"
+  },
+  "AVLP569": {
+   "syn": 257,
+   "sign": "+"
+  },
+  "AVLP370b": {
+   "syn": 222,
+   "sign": "+"
+  },
+  "AVLP340": {
+   "syn": 184,
+   "sign": "+"
+  },
+  "PVLP093": {
+   "syn": 147,
+   "sign": "-"
+  },
+  "CL037": {
+   "syn": 143,
+   "sign": "-"
+  }
+ },
+ "top_inputs_vpoEN": {
+  "CB1484": {
+   "syn": 704,
+   "sign": "+"
+  },
+  "CB2364": {
+   "syn": 563,
+   "sign": "-"
+  },
+  "CB1383": {
+   "syn": 321,
+   "sign": "-"
+  },
+  "WED104": {
+   "syn": 297,
+   "sign": "-"
+  },
+  "AN_AVLP_8": {
+   "syn": 288,
+   "sign": "-"
+  },
+  "CB2633": {
+   "syn": 278,
+   "sign": "+"
+  },
+  "PVLP021": {
+   "syn": 188,
+   "sign": "-"
+  },
+  "CB1869": {
+   "syn": 182,
+   "sign": "+"
+  }
+ },
+ "top_inputs_pC1a": {
+  "SMP093": {
+   "syn": 533,
+   "sign": "-"
+  },
+  "AN_SMP_2": {
+   "syn": 387,
+   "sign": "+"
+  },
+  "CL003": {
+   "syn": 128,
+   "sign": "-"
+  },
+  "CB0959": {
+   "syn": 110,
+   "sign": "-"
+  },
+  "AN_SMP_1": {
+   "syn": 89,
+   "sign": "-"
+  },
+  "pC1a": {
+   "syn": 57,
+   "sign": "+"
+  },
+  "CB3564": {
+   "syn": 38,
+   "sign": "-"
+  },
+  "DNp37": {
+   "syn": 36,
+   "sign": "+"
+  }
+ }
+}

@@ -1,0 +1,164 @@
+{
+ "neurons": 1382,
+ "edges": 45011,
+ "synapses": 800829,
+ "types": 263,
+ "groups": {
+  "GRN_F": 147,
+  "GRN_M": 156,
+  "LC10a": 120,
+  "ORN_cVA": 120,
+  "P1": 148,
+  "PN_cVA": 26,
+  "PPN1": 2,
+  "aSP": 75,
+  "mAL": 98,
+  "other": 450,
+  "pIP10": 2,
+  "song": 32,
+  "vAB3": 6
+ },
+ "nt": {
+  "acetylcholine": 1056,
+  "gaba": 179,
+  "glutamate": 104,
+  "unclear": 41,
+  "dopamine": 2
+ },
+ "top_inputs_P1": {
+  "mAL_m8": {
+   "syn": 3218,
+   "sign": "-"
+  },
+  "mAL_m1": {
+   "syn": 3182,
+   "sign": "-"
+  },
+  "SIP116m": {
+   "syn": 1815,
+   "sign": "-"
+  },
+  "SMP702m": {
+   "syn": 1715,
+   "sign": "-"
+  },
+  "mAL_m5b": {
+   "syn": 1580,
+   "sign": "-"
+  },
+  "SIP100m": {
+   "syn": 1515,
+   "sign": "-"
+  },
+  "AVLP732m": {
+   "syn": 1487,
+   "sign": "+"
+  },
+  "AN08B020": {
+   "syn": 1418,
+   "sign": "+"
+  }
+ },
+ "top_inputs_pIP10": {
+  "pC1_14a": {
+   "syn": 565,
+   "sign": "+"
+  },
+  "AN00A006": {
+   "syn": 395,
+   "sign": "-"
+  },
+  "pC1_5b": {
+   "syn": 215,
+   "sign": "+"
+  },
+  "pC1_7b": {
+   "syn": 190,
+   "sign": "+"
+  },
+  "pC1_19": {
+   "syn": 165,
+   "sign": "+"
+  },
+  "pC1_7a": {
+   "syn": 163,
+   "sign": "+"
+  },
+  "LH007m": {
+   "syn": 127,
+   "sign": "-"
+  },
+  "VES205m": {
+   "syn": 123,
+   "sign": "+"
+  }
+ },
+ "top_inputs_vAB3": {
+  "LgLG8": {
+   "syn": 1631,
+   "sign": "+"
+  },
+  "AN05B035": {
+   "syn": 1043,
+   "sign": "-"
+  },
+  "LgLG5": {
+   "syn": 994,
+   "sign": "+"
+  },
+  "LgLG7": {
+   "syn": 600,
+   "sign": "+"
+  },
+  "LgLG6": {
+   "syn": 544,
+   "sign": "+"
+  },
+  "AN09B017g": {
+   "syn": 479,
+   "sign": "-"
+  },
+  "AN09B017f": {
+   "syn": 347,
+   "sign": "-"
+  },
+  "mAL_m8": {
+   "syn": 310,
+   "sign": "-"
+  }
+ },
+ "top_inputs_mAL": {
+  "mAL_m1": {
+   "syn": 7861,
+   "sign": "-"
+  },
+  "SIP103m": {
+   "syn": 4832,
+   "sign": "-"
+  },
+  "AN09B017b": {
+   "syn": 4811,
+   "sign": "-"
+  },
+  "AN09B017g": {
+   "syn": 4558,
+   "sign": "-"
+  },
+  "AN09B017a": {
+   "syn": 4308,
+   "sign": "-"
+  },
+  "LHAV4c2": {
+   "syn": 3745,
+   "sign": "-"
+  },
+  "AN09B017e": {
+   "syn": 3705,
+   "sign": "-"
+  },
+  "mAL_m8": {
+   "syn": 3550,
+   "sign": "-"
+  }
+ }
+}

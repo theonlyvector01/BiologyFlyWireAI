@@ -1,0 +1,8 @@
+# Большие исходные данные FlyWire (скачиваются скриптом pipeline/01_download.py)
+data/raw/
+data/processed/edges_all.parquet
+data/processed/*_skeletons_full.parquet
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
