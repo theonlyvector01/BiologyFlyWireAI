@@ -2,11 +2,11 @@
  "description_ru": "Обучающие данные: опубликованные эксперименты о выборе партнёра самкой D. melanogaster.",
  "sources": {
   "wang2021": "Wang K. et al. (2021) Neural circuit mechanisms of sexual receptivity in Drosophila females. Nature 589:577–581",
-  "wang2020": "Wang F. et al. (2020) Circuit and behavioral mechanisms of sexual rejection by Drosophila females. Curr Biol 30:3749–3760",
+  "wang2020": "Wang F. et al. (2020) Circuit and behavioral mechanisms of sexual rejection by Drosophila females. Curr Biol 30:3749–3760.e3",
   "zhou2014": "Zhou C. et al. (2014) Central brain neurons expressing doublesex regulate female receptivity in Drosophila. Neuron 83:149–163",
   "feng2014": "Feng K. et al. (2014) Ascending SAG neurons control sexual receptivity of Drosophila females. Neuron 83:135–148",
   "deutsch2020": "Deutsch D. et al. (2020) The neural basis for a persistent internal state in Drosophila females. eLife 9:e59502",
-  "deutsch2019": "Deutsch D. et al. (2019) Shared song detector neurons in Drosophila male and female brains drive sex-specific behaviors. Curr Biol 29:3200–3215",
+  "deutsch2019": "Deutsch D. et al. (2019) Shared song detector neurons in Drosophila male and female brains drive sex-specific behaviors. Curr Biol 29:3200–3215.e5",
   "chen2025": "Chen J. et al. (2025) A hormone-to-neuropeptide pathway inhibits sexual receptivity in immature Drosophila females. PNAS 122:e2418481122",
   "bce1969": "Bennet-Clark H.C., Ewing A.W. (1969) Pulse interval as a critical parameter in the courtship song of Drosophila melanogaster. Anim Behav 17:755–759",
   "manning1959": "Manning A. (1959) The sexual isolation between Drosophila melanogaster and Drosophila simulans. Anim Behav 7:60–65",
@@ -213,7 +213,7 @@
     0.05
    ],
    "title_ru": "Самка 12 ч после выхода из куколки",
-   "evidence_ru": "Первые 18 ч после выхода самки не принимают самцов вовсе.",
+   "evidence_ru": "Первые 18 ч после выхода из куколки самки вовсе не принимают самцов.",
    "source": [
     "chen2025"
    ]
@@ -234,7 +234,7 @@
     0.08
    ],
    "title_ru": "Самка 18 ч",
-   "evidence_ru": "Первые 18 ч после выхода самки не принимают самцов.",
+   "evidence_ru": "Первые 18 ч после выхода из куколки самки не принимают самцов.",
    "source": [
     "chen2025"
    ]
@@ -297,7 +297,7 @@
     0.95
    ],
    "title_ru": "Самка 7 сут",
-   "evidence_ru": "Зрелые самки высоко рецептивны (>80%).",
+   "evidence_ru": "Зрелые самки очень восприимчивы: спариваются более 80%.",
    "source": [
     "chen2025"
    ]
@@ -633,7 +633,7 @@
     1.0
    ],
    "title_ru": "Активированы DNp13 у девственницы",
-   "evidence_ru": "DNp13 — командные нейроны выдвижения яйцеклада. Отпугивает самца это только у спарившихся самок, поэтому для девственницы задана лишь цель по выдвижению яйцеклада.",
+   "evidence_ru": "DNp13 — командные нейроны выдвижения яйцеклада. Самца это отпугивает только у спарившихся самок, поэтому для девственницы задана лишь цель по выдвижению яйцеклада.",
    "source": [
     "wang2020"
    ]
@@ -745,7 +745,7 @@
    "source": [
     "wang2021"
    ],
-   "text_ru": "vpoEN настроены на ~35 мс: частая песня (20 мс) слабее"
+   "text_ru": "vpoEN настроены на ~35 мс: на частую песню (20 мс) ответ слабее"
   },
   {
    "id": "vpoEN_ipi75",
@@ -773,7 +773,7 @@
    "source": [
     "wang2021"
    ],
-   "text_ru": "vpoEN настроены на ~35 мс: редкая песня (75 мс) слабее"
+   "text_ru": "vpoEN настроены на ~35 мс: на редкую песню (75 мс) ответ слабее"
   },
   {
    "id": "vpoEN_mated",

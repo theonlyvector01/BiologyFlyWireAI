@@ -55,7 +55,7 @@
 - **Самка, активация SAG у спарившейся.** Восприимчивость возвращается, как в статье, но чуть сильнее верхней границы.
 - **Самец, мутант Gr32a.** В опытах такие самцы ухаживают за самцами, а в модели нет: запах cVA соперника продолжает тормозить P1.
 
-Подробности по каждому опыту — во вкладке «Обучение и проверка» и в `models/*_report.json`.
+Подробности по каждому опыту — в `models/*_report.json`.
 
 ## Ключевые нейроны
 
@@ -88,6 +88,7 @@ pipeline/                 код на Python (запускать по поряд
   skeleton_utils.py       упрощение скелетов
   06_export_web.py        экспорт моделей в веб-приложение
   07_build_bundle.py      сборка в один html-файл
+  08_check_references.py список литературы: DOI из Crossref и проверка ссылок с датой
 data/literature/          обучающие выборки (JSON, русские описания и ссылки)
 data/processed/           выделенные цепи и упрощённые скелеты (маленькие файлы)
 models/                   обученные веса и отчёты
@@ -110,6 +111,7 @@ python pipeline/04_train.py --sex male --iters 600     # ~20 минут
 python pipeline/05_skeletons.py
 python pipeline/05b_skeletons_male.py
 python pipeline/06_export_web.py
+python pipeline/08_check_references.py
 python pipeline/07_build_bundle.py
 ```
 
@@ -129,4 +131,4 @@ python pipeline/07_build_bundle.py
 - Schlegel P. et al. (2024) Whole-brain annotation and multi-connectome cell typing of Drosophila. *Nature* 634:139–152.
 - Berg S. et al. (2026) Sexual dimorphism in the complete Drosophila male central nervous system connectome. *Cell*.
 - Данные FlyWire: Zenodo 10676866 (связи), 10877326 (скелеты); аннотации — github.com/flyconnectome/flywire_annotations. Данные MaleCNS: gs://flyem-male-cns (v1.0).
-- Полный список статей, из которых взяты обучающие данные, — в `data/literature/*_experiments.json` и во вкладке «Обучение и проверка».
+- Полный список статей со ссылками — во вкладке «Литература» приложения и в `data/literature/references.json`. Все ссылки проверены 18.10.2026 скриптом `pipeline/08_check_references.py`: DOI есть в реестре doi.org и ведёт на страницу статьи у издателя.
